@@ -1,0 +1,129 @@
+services:
+
+  traefik:
+    image: traefik:v3.2
+    container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:8880"
+      - "--entryPoints.traefik.address=:8201" # 修改 dashboard 端口
+    ports:
+      - "8880:8880"
+      - "8201:8201" # 暴露新的 dashboard 端口
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  trt1:
+    image: ${trt_image}
+    container_name: "trt1"
+    runtime: nvidia
+    shm_size: 16G
+    working_dir: /models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '0' ]  # 指定GPU设备，需要按实际情况调整
+    volumes:
+      - ${model_weights}:/models
+    command: >
+      sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.trt.loadbalancer.server.port=8000"
+      - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
+      - "traefik.http.routers.generate.entrypoints=web"
+      - "traefik.http.routers.generate.service=trt"
+      - "traefik.http.services.trt.loadbalancer.sticky=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.secure=false"
+
+  trt2:
+    image: ${trt_image}
+    container_name: "trt2"
+    runtime: nvidia
+    shm_size: 16G
+    working_dir: /models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '1' ]  # 指定GPU设备，需要按实际情况调整
+    volumes:
+      - ${model_weights}:/models
+    command: >
+      sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.trt.loadbalancer.server.port=8000"
+      - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
+      - "traefik.http.routers.generate.entrypoints=web"
+      - "traefik.http.routers.generate.service=trt"
+      - "traefik.http.services.trt.loadbalancer.sticky=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.secure=false"
+
+  trt3:
+    image: ${trt_image}
+    container_name: "trt3"
+    runtime: nvidia
+    shm_size: 16G
+    working_dir: /models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '2' ]  # 指定GPU设备，需要按实际情况调整
+    volumes:
+      - ${model_weights}:/models
+    command: >
+      sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.trt.loadbalancer.server.port=8000"
+      - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
+      - "traefik.http.routers.generate.entrypoints=web"
+      - "traefik.http.routers.generate.service=trt"
+      - "traefik.http.services.trt.loadbalancer.sticky=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.secure=false"
+
+  trt4:
+    image: ${trt_image}
+    container_name: "trt4"
+    runtime: nvidia
+    shm_size: 16G
+    working_dir: /models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '3' ]  # 指定GPU设备，需要按实际情况调整
+    volumes:
+      - ${model_weights}:/models
+    command: >
+      sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.trt.loadbalancer.server.port=8000"
+      - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
+      - "traefik.http.routers.generate.entrypoints=web"
+      - "traefik.http.routers.generate.service=trt"
+      - "traefik.http.services.trt.loadbalancer.sticky=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.trt.loadbalancer.sticky.cookie.secure=false"
