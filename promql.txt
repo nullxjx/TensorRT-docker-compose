@@ -1,0 +1,1 @@
+sum by (model) (rate(nv_inference_queue_summary_us_sum[1m])) / sum by (model) (rate(nv_inference_queue_summary_us_count[1m])) / 1000

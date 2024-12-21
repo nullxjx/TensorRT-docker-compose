@@ -1,7 +1,8 @@
+
 services:
 
   traefik:
-    image: traefik:v3.2
+    image: cs-ai.tencentcloudcr.com/triton/traefik:v3.2-amd64 #traefik:v3.2
     container_name: "traefik"
     command:
       - "--log.level=DEBUG"
@@ -17,7 +18,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   trt1:
-    image: ${trt_image}
+    image: ai-copilot.tencentcloudcr.com/ai-copilot/tritonserver:24.09-trtllm-python-py3
     container_name: "trt1"
     runtime: nvidia
     shm_size: 16G
@@ -30,7 +31,7 @@ services:
               capabilities: [ gpu ]
               device_ids: [ '0' ]  # 指定GPU设备，需要按实际情况调整
     volumes:
-      - ${model_weights}:/models
+      - ${model_weigths}:/models
     command: >
       sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
     labels:
@@ -39,17 +40,20 @@ services:
       - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
       - "traefik.http.routers.generate.entrypoints=web"
       - "traefik.http.routers.generate.service=trt-http"
-      - "traefik.http.services.trt-metric.loadbalancer.server.port=8002"
-      - "traefik.http.routers.metrics.rule=PathPrefix(`/metrics`)"
-      - "traefik.http.routers.metrics.entrypoints=web"
-      - "traefik.http.routers.metrics.service=trt-metric"
+      - "traefik.http.services.trt1-metrics.loadbalancer.server.port=8002"
+      - "traefik.http.routers.trt1-metrics.rule=PathPrefix(`/metrics/trt1`)"
+      - "traefik.http.routers.trt1-metrics.entrypoints=web"
+      - "traefik.http.routers.trt1-metrics.service=trt1-metrics"
+      - "traefik.http.middlewares.trt1-metrics-replace.replacepathregex.regex=^/metrics/trt1"
+      - "traefik.http.middlewares.trt1-metrics-replace.replacepathregex.replacement=/metrics"
+      - "traefik.http.routers.trt1-metrics.middlewares=trt1-metrics-replace"
       - "traefik.http.services.trt-http.loadbalancer.sticky=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.httpOnly=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.secure=false"
 
   trt2:
-    image: ${trt_image}
+    image: ai-copilot.tencentcloudcr.com/ai-copilot/tritonserver:24.09-trtllm-python-py3
     container_name: "trt2"
     runtime: nvidia
     shm_size: 16G
@@ -62,7 +66,7 @@ services:
               capabilities: [ gpu ]
               device_ids: [ '1' ]  # 指定GPU设备，需要按实际情况调整
     volumes:
-      - ${model_weights}:/models
+      - ${model_weigths}:/models
     command: >
       sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
     labels:
@@ -71,17 +75,20 @@ services:
       - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
       - "traefik.http.routers.generate.entrypoints=web"
       - "traefik.http.routers.generate.service=trt-http"
-      - "traefik.http.services.trt-metric.loadbalancer.server.port=8002"
-      - "traefik.http.routers.metrics.rule=PathPrefix(`/metrics`)"
-      - "traefik.http.routers.metrics.entrypoints=web"
-      - "traefik.http.routers.metrics.service=trt-metric"
+      - "traefik.http.services.trt2-metrics.loadbalancer.server.port=8002"
+      - "traefik.http.routers.trt2-metrics.rule=PathPrefix(`/metrics/trt2`)"
+      - "traefik.http.routers.trt2-metrics.entrypoints=web"
+      - "traefik.http.routers.trt2-metrics.service=trt2-metrics"
+      - "traefik.http.middlewares.trt2-metrics-replace.replacepathregex.regex=^/metrics/trt2"
+      - "traefik.http.middlewares.trt2-metrics-replace.replacepathregex.replacement=/metrics"
+      - "traefik.http.routers.trt2-metrics.middlewares=trt2-metrics-replace"
       - "traefik.http.services.trt-http.loadbalancer.sticky=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.httpOnly=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.secure=false"
 
   trt3:
-    image: ${trt_image}
+    image: ai-copilot.tencentcloudcr.com/ai-copilot/tritonserver:24.09-trtllm-python-py3
     container_name: "trt3"
     runtime: nvidia
     shm_size: 16G
@@ -94,7 +101,7 @@ services:
               capabilities: [ gpu ]
               device_ids: [ '2' ]  # 指定GPU设备，需要按实际情况调整
     volumes:
-      - ${model_weights}:/models
+      - ${model_weigths}:/models
     command: >
       sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
     labels:
@@ -103,17 +110,20 @@ services:
       - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
       - "traefik.http.routers.generate.entrypoints=web"
       - "traefik.http.routers.generate.service=trt-http"
-      - "traefik.http.services.trt-metric.loadbalancer.server.port=8002"
-      - "traefik.http.routers.metrics.rule=PathPrefix(`/metrics`)"
-      - "traefik.http.routers.metrics.entrypoints=web"
-      - "traefik.http.routers.metrics.service=trt-metric"
+      - "traefik.http.services.trt3-metrics.loadbalancer.server.port=8002"
+      - "traefik.http.routers.trt3-metrics.rule=PathPrefix(`/metrics/trt3`)"
+      - "traefik.http.routers.trt3-metrics.entrypoints=web"
+      - "traefik.http.routers.trt3-metrics.service=trt3-metrics"
+      - "traefik.http.middlewares.trt3-metrics-replace.replacepathregex.regex=^/metrics/trt3"
+      - "traefik.http.middlewares.trt3-metrics-replace.replacepathregex.replacement=/metrics"
+      - "traefik.http.routers.trt3-metrics.middlewares=trt3-metrics-replace"
       - "traefik.http.services.trt-http.loadbalancer.sticky=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.httpOnly=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.secure=false"
 
   trt4:
-    image: ${trt_image}
+    image: ai-copilot.tencentcloudcr.com/ai-copilot/tritonserver:24.09-trtllm-python-py3
     container_name: "trt4"
     runtime: nvidia
     shm_size: 16G
@@ -126,7 +136,7 @@ services:
               capabilities: [ gpu ]
               device_ids: [ '3' ]  # 指定GPU设备，需要按实际情况调整
     volumes:
-      - ${model_weights}:/models
+      - ${model_weigths}:/models
     command: >
       sh -c "mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/models/${model_repo} --model-control-mode=explicit --http-port=8000 --log-verbose=3 --load-model=ensemble --load-model=preprocessing --load-model=tensorrt_llm --load-model=postprocessing --load-model=tensorrt_llm_bls --disable-auto-complete-config --metrics-config=summary_latencies=true --backend-config=python,shm-region-prefix-name=prefix0_"
     labels:
@@ -135,11 +145,15 @@ services:
       - "traefik.http.routers.generate.rule=PathPrefix(`/v2/models`)"
       - "traefik.http.routers.generate.entrypoints=web"
       - "traefik.http.routers.generate.service=trt-http"
-      - "traefik.http.services.trt-metric.loadbalancer.server.port=8002"
-      - "traefik.http.routers.metrics.rule=PathPrefix(`/metrics`)"
-      - "traefik.http.routers.metrics.entrypoints=web"
-      - "traefik.http.routers.metrics.service=trt-metric"
+      - "traefik.http.services.trt4-metrics.loadbalancer.server.port=8002"
+      - "traefik.http.routers.trt4-metrics.rule=PathPrefix(`/metrics/trt4`)"
+      - "traefik.http.routers.trt4-metrics.entrypoints=web"
+      - "traefik.http.routers.trt4-metrics.service=trt4-metrics"
+      - "traefik.http.middlewares.trt4-metrics-replace.replacepathregex.regex=^/metrics/trt4"
+      - "traefik.http.middlewares.trt4-metrics-replace.replacepathregex.replacement=/metrics"
+      - "traefik.http.routers.trt4-metrics.middlewares=trt4-metrics-replace"
       - "traefik.http.services.trt-http.loadbalancer.sticky=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.name=X-ACC-Sticky-ID"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.httpOnly=true"
       - "traefik.http.services.trt-http.loadbalancer.sticky.cookie.secure=false"
+      

@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: "trt1"
+    metrics_path: "/metrics/trt1"
+    static_configs:
+      - targets: ["traefik_ip:8880"]
+        labels:
+          pod: "trt1"
+
+  - job_name: "trt2"
+    metrics_path: "/metrics/trt2"
+    static_configs:
+      - targets: ["traefik_ip:8880"]
+        labels:
+          pod: "trt2"
+
+  - job_name: "trt3"
+    metrics_path: "/metrics/trt3"
+    static_configs:
+      - targets: ["traefik_ip:8880"]
+        labels:
+          pod: "trt3"
+
+  - job_name: "trt4"
+    metrics_path: "/metrics/trt4"
+    static_configs:
+      - targets: ["traefik_ip:8880"]
+        labels:
+          pod: "trt4"
