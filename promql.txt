@@ -3,3 +3,5 @@ sum by (model) (rate(nv_inference_compute_infer_summary_us_sum[1m])) / sum by (m
 sum by (model) (rate(nv_inference_compute_output_summary_us_sum[1m])) / sum by (model) (rate(nv_inference_compute_output_summary_us_count[1m])) / 1000
 sum by (model) (rate(nv_inference_queue_summary_us_sum[1m])) / sum by (model) (rate(nv_inference_queue_summary_us_count[1m])) / 1000
 sum by (model) (rate(nv_inference_request_summary_us_sum[1m])) / sum by (model) (rate(nv_inference_request_summary_us_count[1m])) / 1000
+sum by (pod) (rate(traefik_pod_choice_total[15s]))
+sum by (path) (increase(traefik_session_persistence_total[1m]))  / sum by (path) (increase(request_total[1m]))
